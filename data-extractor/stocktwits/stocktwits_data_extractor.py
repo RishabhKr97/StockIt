@@ -13,8 +13,6 @@ FIELDS = ['symbol', 'message', 'datetime', 'user', 'message_id']
 SYMBOL = "AAPL"
 FILE_NAME = 'stocktwits_'+SYMBOL+'.csv'
 
-file = open(FILE_NAME, 'a+', newline='')
-
 # DETERMINE WHERE TO START IF RESUMING SCRIPT
 if os.stat(FILE_NAME).st_size == 0:
     # OPEN FILE IN APPEND MODE AND WRITE HEADERS TO FILE
