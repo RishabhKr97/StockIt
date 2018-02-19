@@ -6,6 +6,7 @@
 import csv
 import json
 import os
+import time
 from http_request_randomizer.requests.proxy.requestProxy import RequestProxy
 
 FIELDS = ['symbol', 'message', 'datetime', 'user', 'message_id']
@@ -42,11 +43,18 @@ api_hits = 0
 while True:
     response = req_proxy.generate_proxied_request(stocktwit_url)
     if response is not None:
+
+        if response.status_code == 429:
+            print("###############")
+            print("REQUEST IP RATE LIMITED FOR {} seconds !!!".format(response.headers['X-RateLimit-Reset'] - int(time.time())))
+
         if not response.status_code == 200:
             continue
+
         api_hits += 1
         response = json.loads(response.text)
         last_message_id = response['cursor']['max']
+
         # WRITE DATA TO CSV FILE
         for message in response['messages']:
             # PREPARE OBJECT TO WRITE IN CSV FILE
