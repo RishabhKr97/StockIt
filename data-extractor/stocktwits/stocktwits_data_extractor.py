@@ -46,7 +46,7 @@ while True:
 
         if response.status_code == 429:
             print("###############")
-            print("REQUEST IP RATE LIMITED FOR {} seconds !!!".format(response.headers['X-RateLimit-Reset'] - int(time.time())))
+            print("REQUEST IP RATE LIMITED FOR {} seconds !!!".format(int(response.headers['X-RateLimit-Reset']) - int(time.time())))
 
         if not response.status_code == 200:
             continue
