@@ -40,10 +40,12 @@ if last_message_id is not None:
 
 api_hits = 0
 while True:
-    request = req_proxy.generate_proxied_request(stocktwit_url)
-    if request is not None:
+    response = req_proxy.generate_proxied_request(stocktwit_url)
+    if response is not None:
+        if not response.status_code == 200:
+            continue
         api_hits += 1
-        response = json.loads(request.text)
+        response = json.loads(response.text)
         last_message_id = response['cursor']['max']
         # WRITE DATA TO CSV FILE
         for message in response['messages']:
@@ -56,6 +58,7 @@ while True:
             obj['message_id'] = message['id']
 
             csvfile.writerow(obj)
+            file.flush()
 
 
         print("API HITS TILL NOW = {}".format(api_hits))
