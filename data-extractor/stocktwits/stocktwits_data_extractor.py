@@ -2,7 +2,6 @@
     EXTRACT DATA FROM STOCKTWITS API
     WORKAROUND RATE LIMITS USING PROXY
 """
-
 import csv
 import json
 import os
@@ -10,10 +9,14 @@ import time
 from http_request_randomizer.requests.proxy.requestProxy import RequestProxy
 
 FIELDS = ['symbol', 'message', 'datetime', 'user', 'message_id']
-SYMBOL = "FB"
-FILE_NAME = 'stocktwits_'+SYMBOL+'.csv'
+SYMBOL = "GOOGL"
+FILE_NAME = 'stocktwits_' + SYMBOL + '.csv'
+token = 0
+access_token = ['', 'access_token=32a3552d31b92be5d2a3d282ca3a864f96e95818',
+                'access_token=44ae93a5279092f7804a0ee04753252cbf2ddfee',
+                'access_token=990183ef04060336a46a80aa287f774a9d604f9c']
 
-file = open(FILE_NAME, 'a', newline='')
+file = open(FILE_NAME, 'a', newline='', encoding='utf-8')
 # DETERMINE WHERE TO START IF RESUMING SCRIPT
 if os.stat(FILE_NAME).st_size == 0:
     # OPEN FILE IN APPEND MODE AND WRITE HEADERS TO FILE
@@ -22,20 +25,20 @@ if os.stat(FILE_NAME).st_size == 0:
     csvfile.writeheader()
 else:
     # FIRST EXTRACT LAST MESSAGE ID THEN OPEN FILE IN APPEND MODE WITHOUT WRITING HEADERS
-    file = open(FILE_NAME, 'r', newline='')
-    csvfile = csv.DictReader(file)
+    file = open(FILE_NAME, 'r', newline='', encoding='utf-8')
+    csvfile = csv.DictReader((line.replace('\0', '') for line in file))
     data = list(csvfile)
     data = data[-1]
     last_message_id = data['message_id']
     file.close()
-    file = open(FILE_NAME, 'a', newline='')
+    file = open(FILE_NAME, 'a', newline='', encoding='utf-8')
     csvfile = csv.DictWriter(file, FIELDS)
 
 req_proxy = RequestProxy()
 
-stocktwit_url = "https://api.stocktwits.com/api/2/streams/symbol/"+SYMBOL+".json"
+stocktwit_url = "https://api.stocktwits.com/api/2/streams/symbol/" + SYMBOL + ".json?" + access_token[token]
 if last_message_id is not None:
-    stocktwit_url += "?max="+str(last_message_id)
+    stocktwit_url += "?max=" + str(last_message_id)
 
 api_hits = 0
 while True:
@@ -44,7 +47,8 @@ while True:
 
         if response.status_code == 429:
             print("###############")
-            print("REQUEST IP RATE LIMITED FOR {} seconds !!!".format(int(response.headers['X-RateLimit-Reset']) - int(time.time())))
+            print("REQUEST IP RATE LIMITED FOR {} seconds !!!".format(
+                int(response.headers['X-RateLimit-Reset']) - int(time.time())))
 
         if not response.status_code == 200:
             continue
@@ -66,7 +70,6 @@ while True:
             csvfile.writerow(obj)
             file.flush()
 
-
         print("API HITS TILL NOW = {}".format(api_hits))
 
         # NO MORE MESSAGES
@@ -74,6 +77,9 @@ while True:
             break
 
     # ADD MAX ARGUMENT TO GET OLDER MESSAGES
-    stocktwit_url = "https://api.stocktwits.com/api/2/streams/symbol/"+SYMBOL+".json"+"?max="+str(last_message_id)
+    stocktwit_url = "https://api.stocktwits.com/api/2/streams/symbol/" + SYMBOL + ".json?" + access_token[
+        token] + "&max=" + str(
+        last_message_id)
+    token = (token + 1) % (len(access_token))
 
 file.close()
