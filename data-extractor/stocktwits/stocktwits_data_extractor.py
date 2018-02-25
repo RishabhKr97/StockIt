@@ -12,9 +12,9 @@ FIELDS = ['symbol', 'message', 'datetime', 'user', 'message_id']
 SYMBOL = "GOOGL"
 FILE_NAME = 'stocktwits_' + SYMBOL + '.csv'
 token = 0
-access_token = ['', 'access_token=32a3552d31b92be5d2a3d282ca3a864f96e95818',
-                'access_token=44ae93a5279092f7804a0ee04753252cbf2ddfee',
-                'access_token=990183ef04060336a46a80aa287f774a9d604f9c']
+access_token = ['', 'access_token=32a3552d31b92be5d2a3d282ca3a864f96e95818&',
+                'access_token=44ae93a5279092f7804a0ee04753252cbf2ddfee&',
+                'access_token=990183ef04060336a46a80aa287f774a9d604f9c&']
 
 file = open(FILE_NAME, 'a', newline='', encoding='utf-8')
 # DETERMINE WHERE TO START IF RESUMING SCRIPT
@@ -38,7 +38,7 @@ req_proxy = RequestProxy()
 
 stocktwit_url = "https://api.stocktwits.com/api/2/streams/symbol/" + SYMBOL + ".json?" + access_token[token]
 if last_message_id is not None:
-    stocktwit_url += "?max=" + str(last_message_id)
+    stocktwit_url += "max=" + str(last_message_id)
 
 api_hits = 0
 while True:
@@ -51,6 +51,10 @@ while True:
                 int(response.headers['X-RateLimit-Reset']) - int(time.time())))
 
         if not response.status_code == 200:
+            stocktwit_url = "https://api.stocktwits.com/api/2/streams/symbol/" + SYMBOL + ".json?" + access_token[
+                token] + "max=" + str(
+                last_message_id)
+            token = (token + 1) % (len(access_token))
             continue
 
         api_hits += 1
@@ -78,8 +82,7 @@ while True:
 
     # ADD MAX ARGUMENT TO GET OLDER MESSAGES
     stocktwit_url = "https://api.stocktwits.com/api/2/streams/symbol/" + SYMBOL + ".json?" + access_token[
-        token] + "&max=" + str(
-        last_message_id)
+        token] + "max=" + str(last_message_id)
     token = (token + 1) % (len(access_token))
 
 file.close()
