@@ -1,15 +1,17 @@
 """
     EXTRACT DATA FROM STOCKTWITS API
     WORKAROUND RATE LIMITS USING PROXY
+    CHANGED WORKAROUND METHOD TO USING MULTIPLE ACCESS KEYS
 """
 import csv
 import json
 import os
 import time
-from http_request_randomizer.requests.proxy.requestProxy import RequestProxy
+import requests
+# from http_request_randomizer.requests.proxy.requestProxy import RequestProxy
 
 FIELDS = ['symbol', 'message', 'datetime', 'user', 'message_id']
-SYMBOL = "GOOGL"
+SYMBOL = "AAPL"
 FILE_NAME = 'stocktwits_' + SYMBOL + '.csv'
 token = 0
 access_token = ['', 'access_token=32a3552d31b92be5d2a3d282ca3a864f96e95818&',
@@ -34,7 +36,7 @@ else:
     file = open(FILE_NAME, 'a', newline='', encoding='utf-8')
     csvfile = csv.DictWriter(file, FIELDS)
 
-req_proxy = RequestProxy()
+# req_proxy = RequestProxy()
 
 stocktwit_url = "https://api.stocktwits.com/api/2/streams/symbol/" + SYMBOL + ".json?" + access_token[token]
 if last_message_id is not None:
@@ -42,7 +44,8 @@ if last_message_id is not None:
 
 api_hits = 0
 while True:
-    response = req_proxy.generate_proxied_request(stocktwit_url)
+    # response = req_proxy.generate_proxied_request(stocktwit_url)
+    response = requests.get(stocktwit_url)
     if response is not None:
 
         if response.status_code == 429:
