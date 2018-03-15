@@ -45,7 +45,11 @@ if last_message_id is not None:
 api_hits = 0
 while True:
     # response = req_proxy.generate_proxied_request(stocktwit_url)
-    response = requests.get(stocktwit_url)
+    try:
+        response = requests.get(stocktwit_url)
+    except Exception:
+        response = None
+
     if response is not None:
 
         if response.status_code == 429:
