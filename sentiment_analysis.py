@@ -69,15 +69,18 @@ class SentimentAnalysis:
             here we are using the following approach:
             for each calculated score, if pos score is greater than neg score add (counter*score)
             to 'final score' else if neg score is greater than pos score subtract (counter*score).
-            counter is initially 1. whenever a 'not' is encountered do counter = counter*-1.
+            counter is initially 1. whenever a negation_word is encountered do counter = counter*-1.
             Ignore score of 'not'.
         """
+
+        # collected from word stat financial dictionary
+        negation_words = ["AINT", "AIN'T", "AREN'T", "ARENT", "BARELEY", "CANNOT", "CAN'T", "CANT", "COULDN'T", "COULDNT", "DIDN'T", "DIDNT", "DOESN'T", "DOESNT", "DON'T", "DONT", "FEW", "HARDLY", "HAVEN'T", "HAVENT", "ISN'T", "ISNT", "LOW", "MERELY", "NEITHER", "NEVER", "NEVER", "NO", "NOBOD", "NONE", "NOPE", "NOR", "NOT", "NOTHING", "RARELY", "SELDOM", "SHOULDN'T", "SHOULDNT", "WASN'T", "WASNT", "WEREN'T", "WERENT", "WITHOUT", "WON'T", "WONT", "WOULDN'", "ZERO"]
 
         final_score = 0
         counter = 1
         for score in scores:
             if score[0] is not None:
-                if score[0].startswith('not'):
+                if any(score[0].upper().startswith(x) for x in negation_words):
                     counter *= -1
                 else:
                     if score[1] > score[2]:
