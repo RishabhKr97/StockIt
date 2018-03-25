@@ -42,17 +42,28 @@ class SentimentAnalysis:
         # score list: [(sense name, pos score, neg score)]
         for i in range(len(selected_tags)):
             senses = list(swn.senti_synsets(selected_tags[i][0], selected_tags[i][1]))
+            print(selected_tags[i])
+            print(senses)
             if len(senses) == 0:
                 scores.append((None, 0, 0))
             elif len(senses) == 1:
                 scores.append((senses[0].synset.name(), senses[0].pos_score(), senses[0].neg_score()))
             else:
-                # another approach is to take average score of all senses
-
                 sense = lesk(tokens, selected_tags[i][0], selected_tags[i][1])
-                sense = swn.senti_synset(sense.name())
-                scores.append((sense.synset.name(), sense.pos_score(), sense.neg_score()))
+                print(sense)
+                if sense is None:
+                    # take average score of all original senses
+                    pos_score = 0
+                    neg_score = 0
+                    for i in senses:
+                        pos_score += i.pos_score()
+                        neg_score += i.neg_score()
+                    scores.append((senses[0].synset.name(), pos_score/len(senses), neg_score/len(senses)))
+                else:
+                    sense = swn.senti_synset(sense.name())
+                    scores.append((sense.synset.name(), sense.pos_score(), sense.neg_score()))
 
+        print(scores)
         """
             there are a number of ways for aggregating sentiment scores
             1) sum up all scores
