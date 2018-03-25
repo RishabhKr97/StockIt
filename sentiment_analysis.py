@@ -42,15 +42,12 @@ class SentimentAnalysis:
         # score list: [(sense name, pos score, neg score)]
         for i in range(len(selected_tags)):
             senses = list(swn.senti_synsets(selected_tags[i][0], selected_tags[i][1]))
-            print(selected_tags[i])
-            print(senses)
             if len(senses) == 0:
                 scores.append((None, 0, 0))
             elif len(senses) == 1:
                 scores.append((senses[0].synset.name(), senses[0].pos_score(), senses[0].neg_score()))
             else:
                 sense = lesk(tokens, selected_tags[i][0], selected_tags[i][1])
-                print(sense)
                 if sense is None:
                     # take average score of all original senses
                     pos_score = 0
@@ -63,7 +60,6 @@ class SentimentAnalysis:
                     sense = swn.senti_synset(sense.name())
                     scores.append((sense.synset.name(), sense.pos_score(), sense.neg_score()))
 
-        print(scores)
         """
             there are a number of ways for aggregating sentiment scores
             1) sum up all scores
@@ -73,15 +69,18 @@ class SentimentAnalysis:
             here we are using the following approach:
             for each calculated score, if pos score is greater than neg score add (counter*score)
             to 'final score' else if neg score is greater than pos score subtract (counter*score).
-            counter is initially 1. whenever a 'not' is encountered do counter = counter*-1.
+            counter is initially 1. whenever a negation_word is encountered do counter = counter*-1.
             Ignore score of 'not'.
         """
+
+        # collected from word stat financial dictionary
+        negation_words = ["AINT", "AIN'T", "AREN'T", "ARENT", "BARELEY", "CANNOT", "CAN'T", "CANT", "COULDN'T", "COULDNT", "DIDN'T", "DIDNT", "DOESN'T", "DOESNT", "DON'T", "DONT", "FEW", "HARDLY", "HAVEN'T", "HAVENT", "ISN'T", "ISNT", "LOW", "MERELY", "NEITHER", "NEVER", "NEVER", "NO", "NOBOD", "NONE", "NOPE", "NOR", "NOT", "NOTHING", "RARELY", "SELDOM", "SHOULDN'T", "SHOULDNT", "WASN'T", "WASNT", "WEREN'T", "WERENT", "WITHOUT", "WON'T", "WONT", "WOULDN'", "ZERO"]
 
         final_score = 0
         counter = 1
         for score in scores:
             if score[0] is not None:
-                if score[0].startswith('not'):
+                if any(score[0].upper().startswith(x) for x in negation_words):
                     counter *= -1
                 else:
                     if score[1] > score[2]:
@@ -89,4 +88,23 @@ class SentimentAnalysis:
                     elif score[1] < score[2]:
                         final_score -= counter*score[2]
 
+        print(final_score)
         return final_score
+
+    @classmethod
+    def sentiword_data_analysis(cls, symbol):
+        import load_data
+        import pandas as pd
+        import matplotlib.pyplot as plt
+        import os
+        import numpy as np
+
+        file_location = 'data-extractor/stocktwits_'+symbol+'_sentiwordnet_scored.csv'
+        if os.path.isfile(file_location) is False:
+            dataFrame = load_data.LoadData.get_stocktwits_data(symbol)
+            dataFrame['sentiwordnet_score'] = dataFrame.apply(lambda x: SentimentAnalysis.get_sentiword_score(x['message']), axis = 1)
+            dataFrame.to_csv('data-extractor/stocktwits_'+symbol+'_sentiwordnet_scored.csv', index=False)
+
+        dataFrame = pd.read_csv(file_location)
+        plt.hist(dataFrame['sentiwordnet_score'], bins = np.arange(-3.5, 4, 0.1))
+        plt.show()
