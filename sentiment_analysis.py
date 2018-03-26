@@ -73,7 +73,7 @@ class SentimentAnalysis:
             for each calculated score, if pos score is greater than neg score add (counter*score)
             to 'final score' else if neg score is greater than pos score subtract (counter*score).
             counter is initially 1. whenever a negation_word is encountered do counter = counter*-1.
-            Ignore score of 'not'.
+            Ignore score of negation_words.
         """
 
         # collected from word stat financial dictionary
@@ -102,7 +102,8 @@ class SentimentAnalysis:
             dataFrame.to_csv(file_location, index=False)
 
         dataFrame = pd.read_csv(file_location)
-        plt.hist(dataFrame['sentiwordnet_score'], bins = np.arange(-3.5, 4, 0.1))
+        plt.hist(dataFrame['sentiwordnet_score'], bins=np.arange(-3.5, 4, 0.1), label=symbol)
+        plt.legend(loc='upper right')
         plt.show()
 
     @classmethod
@@ -114,7 +115,7 @@ class SentimentAnalysis:
             dataFrame.to_csv(file_location, index=False)
 
         dataFrame = pd.read_csv(file_location)
-        plt.hist(dataFrame[dataFrame['sentiment']=='Bullish']['sentiwordnet_score'], bins = np.arange(-3.5, 4, 0.1), label='Bullish', alpha=0.5)
-        plt.hist(dataFrame[dataFrame['sentiment']=='Bearish']['sentiwordnet_score'], bins = np.arange(-3.5, 4, 0.1), label='Bearish', alpha=0.5)
+        plt.hist(dataFrame[dataFrame['sentiment']=='Bullish']['sentiwordnet_score'], bins=np.arange(-3.5, 4, 0.1), label='Bullish', alpha=0.5)
+        plt.hist(dataFrame[dataFrame['sentiment']=='Bearish']['sentiwordnet_score'], bins=np.arange(-3.5, 4, 0.1), label='Bearish', alpha=0.5)
         plt.legend(loc='upper right')
         plt.show()
