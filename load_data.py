@@ -6,6 +6,9 @@ import html
 import os.path
 import pandas as pd
 import re
+from nltk import word_tokenize
+from nltk.corpus import stopwords
+from nltk.stem.wordnet import WordNetLemmatizer
 
 class LoadData:
 
@@ -18,6 +21,7 @@ class LoadData:
             2) sort according to datetime in descending order (newest first)
             3) remove links, @ references, extra whitespaces
             4) decode html entities
+            5) convert everything to lower case
         """
 
         if 'datetime' in columns:
@@ -29,8 +33,24 @@ class LoadData:
         dataFrame['message'] = dataFrame['message'].apply(lambda x: re.sub('(www\.|https?://).*?(\s|$)|@.*?(\s|$)|\s+', ' ', x))
         dataFrame['message'] = dataFrame['message'].apply(lambda x: re.sub('^\s*|\s*$', '', x))
         dataFrame['message'] = dataFrame['message'].apply(lambda x: html.unescape(x))
+        dataFrame['message'] = dataFrame['message'].apply(lambda x: x.lower())
 
         dataFrame.to_csv(file_location[:-4]+'_preprocessed.csv', index=False)
+
+    # @classmethod
+    # def labelled_data_analysis(cls):
+    #     """
+    #         extract keywords from labelled stocktwits data for improved accuracy of scoring
+    #     """
+
+    #     dataFrame = LoadData.get_labelled_data()
+    #     bullish_keywords = set()
+    #     bearish_keywords = set()
+    #     stop_words = set(stopwords.words('english'))
+    #     for index, row in dataFrame.iterrows():
+    #         tokens = word_tokenize(row['message'])
+
+
 
     @classmethod
     def get_stocktwits_data(cls, symbol):
