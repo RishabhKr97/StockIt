@@ -79,7 +79,7 @@ class SentimentAnalysis:
         """
 
         # collected from word stat financial dictionary
-        negation_words = list(open('data-extractor/negation_words_lexicon.txt').read().split())
+        negation_words = list(open('data-extractor/lexicon_negation_words.txt').read().split())
 
         final_score = 0
         counter = 1
