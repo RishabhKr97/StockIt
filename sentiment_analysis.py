@@ -2,6 +2,11 @@
     perform sentiment analysis of stocktwits data
 """
 
+import load_data
+import pandas as pd
+import matplotlib.pyplot as plt
+import os
+import numpy as np
 from nltk import word_tokenize, pos_tag
 from nltk.corpus import sentiwordnet as swn
 from nltk.wsd import lesk
@@ -93,18 +98,26 @@ class SentimentAnalysis:
 
     @classmethod
     def sentiword_data_analysis(cls, symbol):
-        import load_data
-        import pandas as pd
-        import matplotlib.pyplot as plt
-        import os
-        import numpy as np
-
         file_location = 'data-extractor/stocktwits_'+symbol+'_sentiwordnet_scored.csv'
         if os.path.isfile(file_location) is False:
             dataFrame = load_data.LoadData.get_stocktwits_data(symbol)
             dataFrame['sentiwordnet_score'] = dataFrame.apply(lambda x: SentimentAnalysis.get_sentiword_score(x['message']), axis = 1)
-            dataFrame.to_csv('data-extractor/stocktwits_'+symbol+'_sentiwordnet_scored.csv', index=False)
+            dataFrame.to_csv(file_location, index=False)
 
         dataFrame = pd.read_csv(file_location)
         plt.hist(dataFrame['sentiwordnet_score'], bins = np.arange(-3.5, 4, 0.1))
+        plt.show()
+
+    @classmethod
+    def labelled_data_sentiwordnet_analysis(cls):
+        file_location = 'data-extractor/labelled_data_sentiwordnet_scored.csv'
+        if os.path.isfile(file_location) is False:
+            dataFrame = load_data.LoadData.get_labelled_data()
+            dataFrame['sentiwordnet_score'] = dataFrame.apply(lambda x: SentimentAnalysis.get_sentiword_score(x['message']), axis = 1)
+            dataFrame.to_csv(file_location, index=False)
+
+        dataFrame = pd.read_csv(file_location)
+        plt.hist(dataFrame[dataFrame['sentiment']=='Bullish']['sentiwordnet_score'], bins = np.arange(-3.5, 4, 0.1), label='Bullish', alpha=0.5)
+        plt.hist(dataFrame[dataFrame['sentiment']=='Bearish']['sentiwordnet_score'], bins = np.arange(-3.5, 4, 0.1), label='Bearish', alpha=0.5)
+        plt.legend(loc='upper right')
         plt.show()
