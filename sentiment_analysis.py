@@ -36,13 +36,13 @@ class SentimentAnalysis:
 
         for i in range(len(pos)):
             if pos[i][1].startswith('J'):
-                selected_tags.append((lemmatizer.lemmatize(pos[i][0]), 'a'))
+                selected_tags.append((lemmatizer.lemmatize(pos[i][0], 'a'), 'a'))
             elif pos[i][1].startswith('V'):
-                selected_tags.append((lemmatizer.lemmatize(pos[i][0]), 'v'))
+                selected_tags.append((lemmatizer.lemmatize(pos[i][0], 'v'), 'v'))
             elif pos[i][1].startswith('N'):
-                selected_tags.append((lemmatizer.lemmatize(pos[i][0]), 'n'))
+                selected_tags.append((lemmatizer.lemmatize(pos[i][0], 'n'), 'n'))
             elif pos[i][1].startswith('R'):
-                selected_tags.append((lemmatizer.lemmatize(pos[i][0]), 'r'))
+                selected_tags.append((lemmatizer.lemmatize(pos[i][0], 'r'), 'r'))
 
         # score list: [(sense name, pos score, neg score)]
         for i in range(len(selected_tags)):
