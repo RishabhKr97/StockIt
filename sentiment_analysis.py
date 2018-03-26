@@ -47,11 +47,9 @@ class SentimentAnalysis:
         # score list: [(sense name, pos score, neg score)]
         for i in range(len(selected_tags)):
             senses = list(swn.senti_synsets(selected_tags[i][0], selected_tags[i][1]))
-            if len(senses) == 0:
-                scores.append((None, 0, 0))
-            elif len(senses) == 1:
+            if len(senses) == 1:
                 scores.append((senses[0].synset.name(), senses[0].pos_score(), senses[0].neg_score()))
-            else:
+            elif len(senses) > 1:
                 sense = lesk(tokens, selected_tags[i][0], selected_tags[i][1])
                 if sense is None:
                     # take average score of all original senses
@@ -84,14 +82,13 @@ class SentimentAnalysis:
         final_score = 0
         counter = 1
         for score in scores:
-            if score[0] is not None:
-                if any(score[0].startswith(x) for x in negation_words):
-                    counter *= -1
-                else:
-                    if score[1] > score[2]:
-                        final_score += counter*score[1]
-                    elif score[1] < score[2]:
-                        final_score -= counter*score[2]
+            if any(score[0].startswith(x) for x in negation_words):
+                counter *= -1
+            else:
+                if score[1] > score[2]:
+                    final_score += counter*score[1]
+                elif score[1] < score[2]:
+                    final_score -= counter*score[2]
 
         print(final_score)
         return final_score
