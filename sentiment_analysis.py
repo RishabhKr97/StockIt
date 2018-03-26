@@ -79,13 +79,13 @@ class SentimentAnalysis:
         """
 
         # collected from word stat financial dictionary
-        negation_words = ["AINT", "AIN'T", "AREN'T", "ARENT", "BARELEY", "CANNOT", "CAN'T", "CANT", "COULDN'T", "COULDNT", "DIDN'T", "DIDNT", "DOESN'T", "DOESNT", "DON'T", "DONT", "FEW", "HARDLY", "HAVEN'T", "HAVENT", "ISN'T", "ISNT", "LOW", "MERELY", "NEITHER", "NEVER", "NEVER", "NO", "NOBOD", "NONE", "NOPE", "NOR", "NOT", "NOTHING", "RARELY", "SELDOM", "SHOULDN'T", "SHOULDNT", "WASN'T", "WASNT", "WEREN'T", "WERENT", "WITHOUT", "WON'T", "WONT", "WOULDN'", "ZERO"]
+        negation_words = list(open('data-extractor/negation_words_lexicon.txt').read().split())
 
         final_score = 0
         counter = 1
         for score in scores:
             if score[0] is not None:
-                if any(score[0].upper().startswith(x) for x in negation_words):
+                if any(score[0].startswith(x) for x in negation_words):
                     counter *= -1
                 else:
                     if score[1] > score[2]:
