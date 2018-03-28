@@ -129,3 +129,24 @@ class LoadData:
         dataFrameBearish = pd.read_csv(file_location1, header=None, names=['word'])
         dataFrameBullish = pd.read_csv(file_location2, header=None, names=['word'])
         return dataFrameBearish, dataFrameBullish
+
+    @classmethod
+    def split_labelled_data(cls):
+        """
+            randomly split labelled data to training and test files
+        """
+        import numpy as np
+
+        dataFrame = LoadData.get_labelled_data()
+        dataFrameBearish = dataFrame[dataFrame['sentiment']=='Bearish']
+        dataFrameBullish = dataFrame[dataFrame['sentiment']=='Bullish']
+        msk = np.random.rand(len(dataFrameBearish)) < 0.85
+        dataFrameBearishTraining = dataFrameBearish[msk]
+        dataFrameBearishTest = dataFrameBearish[~msk]
+        msk = np.random.rand(len(dataFrameBullish)) < 0.85
+        dataFrameBullishTraining = dataFrameBullish[msk]
+        dataFrameBullishTest = dataFrameBullish[~msk]
+        dataFrameBearishTraining.to_csv('data-extractor/labelled_data_bearish_training.csv', index=False)
+        dataFrameBearishTest.to_csv('data-extractor/labelled_data_bearish_test.csv', index=False)
+        dataFrameBullishTraining.to_csv('data-extractor/labelled_data_bullish_training.csv', index=False)
+        dataFrameBullishTest.to_csv('data-extractor/labelled_data_bullish_test.csv', index=False)
