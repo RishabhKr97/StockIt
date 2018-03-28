@@ -7,7 +7,7 @@ import os.path
 import pandas as pd
 import re
 from nltk import word_tokenize, pos_tag
-from nltk.corpus import stopwords
+from nltk.corpus import stopwords, wordnet
 from nltk.stem.wordnet import WordNetLemmatizer
 
 class LoadData:
@@ -47,8 +47,7 @@ class LoadData:
             for each labelled message do
             1) tokenize the message
             2) perform POS tagging
-            3) lemmatize the words
-            4) remove stop words
+            3) if a sense is present in wordnet then, lemmatize the word and remove stop words else ignore the word
             remove intersections from the two lists before saving
         """
 
@@ -63,14 +62,15 @@ class LoadData:
             selected_tags = set()
 
             for i in range(len(pos)):
-                if pos[i][1].startswith('J'):
-                    selected_tags.add(lemmatizer.lemmatize(pos[i][0], 'a'))
-                elif pos[i][1].startswith('V'):
-                    selected_tags.add(lemmatizer.lemmatize(pos[i][0], 'v'))
-                elif pos[i][1].startswith('N'):
-                    selected_tags.add(lemmatizer.lemmatize(pos[i][0], 'n'))
-                elif pos[i][1].startswith('R'):
-                    selected_tags.add(lemmatizer.lemmatize(pos[i][0], 'r'))
+                if len(wordnet.synsets(pos[i][0])):
+                    if pos[i][1].startswith('J'):
+                        selected_tags.add(lemmatizer.lemmatize(pos[i][0], 'a'))
+                    elif pos[i][1].startswith('V'):
+                        selected_tags.add(lemmatizer.lemmatize(pos[i][0], 'v'))
+                    elif pos[i][1].startswith('N'):
+                        selected_tags.add(lemmatizer.lemmatize(pos[i][0], 'n'))
+                    elif pos[i][1].startswith('R'):
+                        selected_tags.add(lemmatizer.lemmatize(pos[i][0], 'r'))
             selected_tags -= stop_words
 
             if row['sentiment'] == 'Bullish':
