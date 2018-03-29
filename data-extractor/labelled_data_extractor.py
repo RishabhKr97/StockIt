@@ -82,9 +82,8 @@ while True:
         for message in response['messages']:
             # PREPARE OBJECT TO WRITE IN CSV FILE
 
-
             temp = message['entities']['sentiment']
-            if temp is not None and temp['basic']== 'Bearish':
+            if temp is not None and temp['basic']:
                 obj = {}
                 obj['symbol'] = SYMBOL[token]
                 obj['message'] = message['body']
@@ -95,13 +94,9 @@ while True:
 
         print("API HITS TILL NOW = {}".format(api_hits))
 
-
-
-
     # ADD MAX ARGUMENT TO GET OLDER MESSAGES
     token = (token + 1) % (len(access_token))
     stocktwit_url = "https://api.stocktwits.com/api/2/streams/symbol/" + SYMBOL[token] + ".json?" + access_token[
         token] + "max=" + str(last_message_id[token])
-
 
 file.close()
