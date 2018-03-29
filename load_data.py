@@ -137,6 +137,14 @@ class LoadData:
         """
         import numpy as np
 
+        try:
+            os.remove('data-extractor/labelled_data_bearish_training.csv')
+            os.remove('data-extractor/labelled_data_bearish_test.csv')
+            os.remove('data-extractor/labelled_data_bullish_training.csv')
+            os.remove('data-extractor/labelled_data_bullish_test.csv')
+        except OSError:
+            pass
+
         dataFrame = LoadData.get_labelled_data()
         dataFrameBearish = dataFrame[dataFrame['sentiment']=='Bearish']
         dataFrameBullish = dataFrame[dataFrame['sentiment']=='Bullish']
