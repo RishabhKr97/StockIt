@@ -2,3 +2,5 @@
 .vscode
 __pycache__
 *.py[cod]
+*_training*.txt
+*_test*.txt
