@@ -114,3 +114,18 @@ class LoadData:
 
         dataFrame = pd.read_csv(file_location)
         return dataFrame
+
+    @classmethod
+    def get_custom_lexicon(cls):
+        """
+            get custom lexicon of bearish and bullish words respectively
+        """
+
+        file_location1 = 'data-extractor/lexicon_bearish_words.txt'
+        file_location2 = 'data-extractor/lexicon_bullish_words.txt'
+        if os.path.isfile(file_location1) is False or os.path.isfile(file_location2) is False:
+            LoadData.labelled_data_lexicon_analysis()
+
+        dataFrameBearish = pd.read_csv(file_location1, header=None, names=['word'])
+        dataFrameBullish = pd.read_csv(file_location2, header=None, names=['word'])
+        return dataFrameBearish, dataFrameBullish
