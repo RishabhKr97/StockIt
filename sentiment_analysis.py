@@ -69,27 +69,39 @@ class SentimentAnalysis:
             2) average all scores (or only for non zero scores)
             3) (1) or (2) but only for adjectives
             4) if pos score greater than neg score +1 vote else -1 vote
-            here we are using the following approach:
-            for each calculated score, if pos score is greater than neg score add (counter*score)
-            to 'final score' else if neg score is greater than pos score subtract (counter*score).
-            counter is initially 1. whenever a negation_word is encountered do counter = counter*-1.
-            Ignore score of negation_words.
+            here we are summing up the positive and negative scores to be used by classifier.
+            whenever we encounter a negative word, we reverse the positive and negative score.
         """
 
         # collected from word stat financial dictionary
         negation_words = list(open('data-extractor/lexicon_negation_words.txt').read().split())
 
-        final_score = 0
+        # final_score = 0
+        # counter = 1
+        # for score in scores:
+        #     if any(score[0].startswith(x) for x in negation_words):
+        #         counter *= -1
+        #     else:
+        #         if score[1] > score[2]:
+        #             final_score += counter*score[1]
+        #         elif score[1] < score[2]:
+        #             final_score -= counter*score[2]
+
         counter = 1
+        pos_score = 0
+        neg_score = 0
         for score in scores:
             if any(score[0].startswith(x) for x in negation_words):
                 counter *= -1
             else:
-                if score[1] > score[2]:
-                    final_score += counter*score[1]
-                elif score[1] < score[2]:
-                    final_score -= counter*score[2]
+                if counter == 1:
+                    pos_score += score[1]
+                    neg_score += score[2]
+                elif counter == -1:
+                    pos_score += score[2]
+                    neg_score += score[1]
 
+        final_score = [pos_score, neg_score]
         print(final_score)
         return final_score
 
