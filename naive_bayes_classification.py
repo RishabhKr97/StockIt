@@ -19,7 +19,7 @@ class NaiveBayes:
         dataFrameTraining = load_data.LoadData.get_labelled_data(type='training')
 
         # make a pipeline for transforms
-        tweet_classifier = Pipeline([('vect', CountVectorizer(ngram_range=(1,2))), ('tfidf', TfidfTransformer(use_idf=False)), ('clf', MultinomialNB(alpha=0.01))])
+        tweet_classifier = Pipeline([('vect', CountVectorizer(ngram_range=(1,2), strip_accents= 'unicode', stop_words='english')), ('tfidf', TfidfTransformer(use_idf=False)), ('clf', MultinomialNB(alpha=0.01))])
         tweet_classifier.fit(dataFrameTraining['message'].values, dataFrameTraining['sentiment'].values)
 
         # grid search for best params
@@ -53,3 +53,21 @@ class NaiveBayes:
         print(metrics.accuracy_score(dataFrameTest['sentiment'].values, predicted))
         print(metrics.classification_report(dataFrameTest['sentiment'].values, predicted))
         print(metrics.confusion_matrix(dataFrameTest['sentiment'].values, predicted))
+
+    @classmethod
+    def show_most_informative_features(cls):
+        dataFrameTraining = load_data.LoadData.get_labelled_data(type='training')
+        vect = CountVectorizer(ngram_range=(1,2), strip_accents= 'unicode',stop_words='english')
+        x_train_counts = vect.fit_transform(dataFrameTraining['message'].values)
+        tf_transformer = TfidfTransformer(use_idf=False)
+        x_train_tf = tf_transformer.fit_transform(x_train_counts)
+        clf = MultinomialNB().fit(x_train_tf, dataFrameTraining['sentiment'].values)
+
+        """Prints features with the highest coefficient values, per class"""
+        feature_names = vect.get_feature_names()
+        n=20
+        feature_names = vect.get_feature_names()
+        coefs_with_fns = sorted(zip(clf.coef_[0], feature_names))
+        top = zip(coefs_with_fns[:n], coefs_with_fns[:-(n + 1):-1])
+        for (coef_1, fn_1), (coef_2, fn_2) in top:
+            print ("\t%.4f\t%-15s\t\t%.4f\t%-15s" % (coef_1, fn_1, coef_2, fn_2))
