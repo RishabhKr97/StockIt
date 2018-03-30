@@ -12,31 +12,29 @@ from sklearn.naive_bayes import MultinomialNB
 from sklearn.externals import joblib
 from sklearn.model_selection import GridSearchCV
 from sklearn import metrics
-from sklearn.base import BaseEstimator, TransformerMixin
-
-class FeatureScoreExtractor(BaseEstimator, TransformerMixin):
-    def __init__(self):
-        pass
-
-    def get_score(self, message):
-        return sentiment_analysis.SentimentAnalysis.get_sentiword_score(message)
-
-    def transform(self, messages, y=None):
-        """The workhorse of this feature extractor"""
-        return [self.get_score(x) for x in messages]
-
-    def fit(self, df, y=None):
-        """Returns `self` unless something different happens in train and test"""
-        return self
+from sklearn.preprocessing import FunctionTransformer
 
 class NaiveBayes:
+
+    @classmethod
+    def setiwordnet_scorer(cls, messages):
+        return [sentiment_analysis.SentimentAnalysis.get_sentiword_score(x) for x in messages]
 
     @classmethod
     def train_classifier(cls):
         dataFrameTraining = load_data.LoadData.get_labelled_data(type='training')
 
         # make a pipeline for transforms
-        tweet_classifier = Pipeline([('feats', FeatureUnion([('vect', CountVectorizer(ngram_range=(1,2), strip_accents= 'unicode', stop_words='english')), ('sentiscore', FeatureScoreExtractor())]) ), ('clf', MultinomialNB(alpha=0.01))])
+        tweet_classifier = Pipeline([
+            ('feats', FeatureUnion([
+                ('text', Pipeline([
+                    ('vect', CountVectorizer(ngram_range=(1,2), strip_accents= 'unicode', stop_words='english')),
+                    ('tfidf', TfidfTransformer(use_idf=False))
+                ])),
+                ('sentiscore', FunctionTransformer(NaiveBayes.setiwordnet_scorer, validate=False))
+            ])),
+            ('clf', MultinomialNB(alpha=0.01))
+        ])
         tweet_classifier.fit(dataFrameTraining['message'].values, dataFrameTraining['sentiment'].values)
 
         # grid search for best params
