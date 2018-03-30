@@ -19,7 +19,8 @@ class LoadData:
             '_preprocessed' before '.csv). The preprocessing us in following ways:
             1) extract message and datetime columns.
             2) sort according to datetime in descending order (newest first)
-            3) remove links, @ references, extra whitespaces, extra '.', digits, slashes, hyphons
+            3) remove links, @ and $ references, extra whitespaces, extra '.', digits, slashes,
+            hyphons
             4) decode html entities
             5) convert everything to lower case
         """
@@ -31,7 +32,7 @@ class LoadData:
             dataFrame = pd.read_csv(file_location, usecols=columns)
 
         dataFrame['message'] = dataFrame['message'].apply(lambda x: html.unescape(x))
-        dataFrame['message'] = dataFrame['message'].apply(lambda x: re.sub(r'(www\.|https?://).*?(\s|$)|@.*?(\s|$)|\d|\%|\\|/|-|_', ' ', x))
+        dataFrame['message'] = dataFrame['message'].apply(lambda x: re.sub(r'(www\.|https?://).*?(\s|$)|@.*?(\s|$)|\$.*?(\s|$)|\d|\%|\\|/|-|_', ' ', x))
         dataFrame['message'] = dataFrame['message'].apply(lambda x: re.sub(r'\.+', '. ', x))
         dataFrame['message'] = dataFrame['message'].apply(lambda x: re.sub(r'\,+', ', ', x))
         dataFrame['message'] = dataFrame['message'].apply(lambda x: re.sub(r'\?+', '? ', x))
