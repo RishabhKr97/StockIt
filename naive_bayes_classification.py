@@ -23,7 +23,7 @@ class NaiveBayes:
         tweet_classifier.fit(dataFrameTraining['message'].values, dataFrameTraining['sentiment'].values)
 
         # grid search for best params
-        # parameters ={'vect__ngram_range': [(1, 1), (1, 2)], 'tfidf__use_idf': (True, False),'clf__alpha': (0,1,1e-2, 1e-3,0.5), 'clf__fit_prior': (True, False)}
+        # parameters ={'vect__ngram_range': [(1, 1), (1, 2)], 'tfidf__use_idf': (True, False),'clf__alpha': (0,1,1e-2,1e-3,0.5), 'clf__fit_prior': (True, False)}
         # gridsearch = GridSearchCV(tweet_classifier, parameters, n_jobs=-1)
         # gridsearch = gridsearch.fit(dataFrameTraining['message'].values, dataFrameTraining['sentiment'].values)
         # print(gridsearch.best_score_)
