@@ -162,6 +162,7 @@ class LoadData:
         dataFrameBearishTest = dataFrameBearish[~msk]
         msk = np.random.rand(len(dataFrameBullish)) < 0.80
         dataFrameBullishTraining = dataFrameBullish[msk]
+        dataFrameBullishTraining = dataFrameBullishTraining[:len(dataFrameBearishTraining)]
         dataFrameBullishTest = dataFrameBullish[~msk]
 
         dataFrameTraining = dataFrameBearishTraining.append(dataFrameBullishTraining, ignore_index=True).sample(frac=1).reset_index(drop=True)

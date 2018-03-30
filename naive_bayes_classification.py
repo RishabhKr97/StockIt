@@ -8,9 +8,9 @@ import numpy as np
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 from sklearn.pipeline import Pipeline
 from sklearn.naive_bayes import MultinomialNB
-from sklearn.linear_model import SGDClassifier
 from sklearn.externals import joblib
 from sklearn.model_selection import GridSearchCV
+from sklearn import metrics
 
 class NaiveBayes:
 
@@ -23,7 +23,7 @@ class NaiveBayes:
         tweet_classifier.fit(dataFrameTraining['message'].values, dataFrameTraining['sentiment'].values)
 
         # grid search for best params
-        # parameters ={'vect__ngram_range': [(1, 1), (1, 2)], 'tfidf__use_idf': (True, False),'clf__alpha': (1e-2, 1e-3), 'clf__fit_prior': (True, False)}
+        # parameters ={'vect__ngram_range': [(1, 1), (1, 2)], 'tfidf__use_idf': (True, False),'clf__alpha': (0,1,1e-2, 1e-3,0.5), 'clf__fit_prior': (True, False)}
         # gridsearch = GridSearchCV(tweet_classifier, parameters, n_jobs=-1)
         # gridsearch = gridsearch.fit(dataFrameTraining['message'].values, dataFrameTraining['sentiment'].values)
         # print(gridsearch.best_score_)
@@ -40,7 +40,7 @@ class NaiveBayes:
 
     @classmethod
     def test_classifier(cls):
-        dataFrameTest = load_data.LoadData.get_labelled_data(type='test')
+        dataFrameTest = load_data.LoadData.get_labelled_data(type='training')
 
         # load the saved classifier
         file_location = 'naive_bayes_classifier.pkl'
@@ -49,4 +49,7 @@ class NaiveBayes:
 
         tweet_classifier = joblib.load(file_location)
         predicted = tweet_classifier.predict(dataFrameTest['message'].values)
-        print(np.mean(predicted == dataFrameTest['sentiment'].values))
+        # print(np.mean(predicted == dataFrameTest['sentiment'].values))
+        print(metrics.accuracy_score(dataFrameTest['sentiment'].values, predicted))
+        print(metrics.classification_report(dataFrameTest['sentiment'].values, predicted))
+        print(metrics.confusion_matrix(dataFrameTest['sentiment'].values, predicted))
