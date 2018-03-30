@@ -103,15 +103,24 @@ class LoadData:
         return dataFrame
 
     @classmethod
-    def get_labelled_data(cls):
+    def get_labelled_data(cls, type='complete'):
         """
             get_labelled_data loads the preprocessed labelled data of stocktwits from data-extractor
             and returns a pandas dataframe with columns [sentiment(object), message(object)].
         """
 
-        file_location = 'data-extractor/labelled_data_preprocessed.csv'
-        if os.path.isfile(file_location) is False:
-            LoadData.preprocess_stocktwits_data('data-extractor/labelled_data.csv', columns=['sentiment', 'message'])
+        if type == 'complete':
+            file_location = 'data-extractor/labelled_data_preprocessed.csv'
+            if os.path.isfile(file_location) is False:
+                LoadData.preprocess_stocktwits_data('data-extractor/labelled_data.csv', columns=['sentiment', 'message'])
+        elif type == 'training':
+            file_location = 'data-extractor/labelled_data_training.csv'
+            if os.path.isfile(file_location) is False:
+                LoadData.split_labelled_data()
+        elif type == 'test':
+            file_location = 'data-extractor/labelled_data_test.csv'
+            if os.path.isfile(file_location) is False:
+                LoadData.split_labelled_data()
 
         dataFrame = pd.read_csv(file_location)
         return dataFrame
@@ -136,26 +145,26 @@ class LoadData:
         """
             randomly split labelled data to training and test files
         """
+
         import numpy as np
 
         try:
-            os.remove('data-extractor/labelled_data_bearish_training.csv')
-            os.remove('data-extractor/labelled_data_bearish_test.csv')
-            os.remove('data-extractor/labelled_data_bullish_training.csv')
-            os.remove('data-extractor/labelled_data_bullish_test.csv')
+            os.remove('data-extractor/labelled_data_training.csv')
+            os.remove('data-extractor/labelled_data_test.csv')
         except OSError:
             pass
 
         dataFrame = LoadData.get_labelled_data()
         dataFrameBearish = dataFrame[dataFrame['sentiment']=='Bearish']
         dataFrameBullish = dataFrame[dataFrame['sentiment']=='Bullish']
-        msk = np.random.rand(len(dataFrameBearish)) < 0.85
+        msk = np.random.rand(len(dataFrameBearish)) < 0.80
         dataFrameBearishTraining = dataFrameBearish[msk]
         dataFrameBearishTest = dataFrameBearish[~msk]
-        msk = np.random.rand(len(dataFrameBullish)) < 0.85
+        msk = np.random.rand(len(dataFrameBullish)) < 0.80
         dataFrameBullishTraining = dataFrameBullish[msk]
         dataFrameBullishTest = dataFrameBullish[~msk]
-        dataFrameBearishTraining.to_csv('data-extractor/labelled_data_bearish_training.csv', index=False)
-        dataFrameBearishTest.to_csv('data-extractor/labelled_data_bearish_test.csv', index=False)
-        dataFrameBullishTraining.to_csv('data-extractor/labelled_data_bullish_training.csv', index=False)
-        dataFrameBullishTest.to_csv('data-extractor/labelled_data_bullish_test.csv', index=False)
+
+        dataFrameTraining = dataFrameBearishTraining.append(dataFrameBullishTraining, ignore_index=True).sample(frac=1).reset_index(drop=True)
+        dataFrameTest = dataFrameBearishTest.append(dataFrameBullishTest, ignore_index=True).sample(frac=1).reset_index(drop=True)
+        dataFrameTraining.to_csv('data-extractor/labelled_data_training.csv', index=False)
+        dataFrameTest.to_csv('data-extractor/labelled_data_test.csv', index=False)
