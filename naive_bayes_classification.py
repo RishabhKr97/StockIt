@@ -14,18 +14,18 @@ from sklearn.model_selection import GridSearchCV
 from sklearn import metrics
 from sklearn.preprocessing import FunctionTransformer
 
-SENTI_CACHE_DICT = {}
-
 class NaiveBayes:
+
+    SENTI_CACHE_DICT = {}
 
     @classmethod
     def setiwordnet_scorer(cls, messages):
         scores = []
         for x in messages:
-            if x not in SENTI_CACHE_DICT:
-                SENTI_CACHE_DICT[x] = sentiment_analysis.SentimentAnalysis.get_sentiword_score(x)
+            if x not in NaiveBayes.SENTI_CACHE_DICT:
+                NaiveBayes.SENTI_CACHE_DICT[x] = sentiment_analysis.SentimentAnalysis.get_sentiword_score(x)
 
-            scores.append(SENTI_CACHE_DICT[x])
+            scores.append(NaiveBayes.SENTI_CACHE_DICT[x])
 
         return scores
 
