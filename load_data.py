@@ -110,17 +110,17 @@ class LoadData:
         """
 
         if type == 'complete':
-            file_location = 'data-extractor/labelled_data_preprocessed.csv'
+            file_location = 'data-extractor/labelled_data_complete_preprocessed.csv'
             if os.path.isfile(file_location) is False:
-                LoadData.preprocess_stocktwits_data('data-extractor/labelled_data.csv', columns=['sentiment', 'message'])
+                LoadData.preprocess_stocktwits_data('data-extractor/labelled_data_complete.csv', columns=['sentiment', 'message'])
         elif type == 'training':
-            file_location = 'data-extractor/labelled_data_training.csv'
+            file_location = 'data-extractor/labelled_data_training_preprocessed.csv'
             if os.path.isfile(file_location) is False:
-                LoadData.split_labelled_data()
+                LoadData.get_training_data()
         elif type == 'test':
-            file_location = 'data-extractor/labelled_data_test.csv'
+            file_location = 'data-extractor/labelled_data_test_preprocessed.csv'
             if os.path.isfile(file_location) is False:
-                LoadData.split_labelled_data()
+                LoadData.preprocess_stocktwits_data('data-extractor/labelled_data_test.csv', columns=['sentiment', 'message'])
 
         dataFrame = pd.read_csv(file_location)
         return dataFrame
@@ -141,31 +141,20 @@ class LoadData:
         return dataFrameBearish, dataFrameBullish
 
     @classmethod
-    def split_labelled_data(cls):
+    def get_training_data(cls):
         """
-            randomly split labelled data to training and test files
+            get labelled training data with equal bearish and bullish messages
         """
-
-        import numpy as np
-
         try:
             os.remove('data-extractor/labelled_data_training.csv')
-            os.remove('data-extractor/labelled_data_test.csv')
         except OSError:
             pass
 
-        dataFrame = LoadData.get_labelled_data()
+        dataFrame = LoadData.get_labelled_data(type='complete')
         dataFrameBearish = dataFrame[dataFrame['sentiment']=='Bearish']
         dataFrameBullish = dataFrame[dataFrame['sentiment']=='Bullish']
-        msk = np.random.rand(len(dataFrameBearish)) < 0.80
-        dataFrameBearishTraining = dataFrameBearish[msk]
-        dataFrameBearishTest = dataFrameBearish[~msk]
-        msk = np.random.rand(len(dataFrameBullish)) < 0.80
-        dataFrameBullishTraining = dataFrameBullish[msk]
-        dataFrameBullishTraining = dataFrameBullishTraining[:len(dataFrameBearishTraining)]
-        dataFrameBullishTest = dataFrameBullish[~msk]
+        dataFrameBearishTraining = dataFrameBearish
+        dataFrameBullishTraining = dataFrameBullish[:len(dataFrameBearish)]
 
         dataFrameTraining = dataFrameBearishTraining.append(dataFrameBullishTraining, ignore_index=True).sample(frac=1).reset_index(drop=True)
-        dataFrameTest = dataFrameBearishTest.append(dataFrameBullishTest, ignore_index=True).sample(frac=1).reset_index(drop=True)
-        dataFrameTraining.to_csv('data-extractor/labelled_data_training.csv', index=False)
-        dataFrameTest.to_csv('data-extractor/labelled_data_test.csv', index=False)
+        dataFrameTraining.to_csv('data-extractor/labelled_data_training_preprocessed.csv', index=False)

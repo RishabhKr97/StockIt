@@ -14,11 +14,20 @@ from sklearn.model_selection import GridSearchCV
 from sklearn import metrics
 from sklearn.preprocessing import FunctionTransformer
 
+SENTI_CACHE_DICT = {}
+
 class NaiveBayes:
 
     @classmethod
     def setiwordnet_scorer(cls, messages):
-        return [sentiment_analysis.SentimentAnalysis.get_sentiword_score(x) for x in messages]
+        scores = []
+        for x in messages:
+            if x not in SENTI_CACHE_DICT:
+                SENTI_CACHE_DICT[x] = sentiment_analysis.SentimentAnalysis.get_sentiword_score(x)
+
+            scores.append(SENTI_CACHE_DICT[x])
+
+        return scores
 
     @classmethod
     def train_classifier(cls):
@@ -28,21 +37,20 @@ class NaiveBayes:
         tweet_classifier = Pipeline([
             ('feats', FeatureUnion([
                 ('text', Pipeline([
-                    ('vect', CountVectorizer(ngram_range=(1,2), strip_accents= 'unicode', stop_words='english')),
-                    ('tfidf', TfidfTransformer(use_idf=False))
+                    ('vect', CountVectorizer()),
+                    ('tfidf', TfidfTransformer())
                 ])),
                 ('sentiscore', FunctionTransformer(NaiveBayes.setiwordnet_scorer, validate=False))
             ])),
             ('clf', MultinomialNB(alpha=0.01))
         ])
-        tweet_classifier.fit(dataFrameTraining['message'].values, dataFrameTraining['sentiment'].values)
 
         # grid search for best params
-        # parameters ={'vect__ngram_range': [(1, 1), (1, 2)], 'tfidf__use_idf': (True, False),'clf__alpha': (0,1,1e-2,1e-3,0.5), 'clf__fit_prior': (True, False)}
-        # gridsearch = GridSearchCV(tweet_classifier, parameters, n_jobs=-1)
-        # gridsearch = gridsearch.fit(dataFrameTraining['message'].values, dataFrameTraining['sentiment'].values)
-        # print(gridsearch.best_score_)
-        # print(gridsearch.best_params_)
+        parameters ={'feats__text__vect__ngram_range': [(1, 1), (1, 2)], 'feats__text__vect__strip_accents': ('unicode', None), 'feats__text__vect__stop_words': ('english', None), 'feats__text__tfidf__use_idf': (True, False), 'clf__alpha': (0.7,1,1e-2,1e-3,0.5,0.3), 'clf__fit_prior': (True, False)}
+        gridsearch = GridSearchCV(tweet_classifier, parameters, n_jobs=-1)
+        gridsearch = gridsearch.fit(dataFrameTraining['message'].values, dataFrameTraining['sentiment'].values)
+        print(gridsearch.best_score_)
+        print(gridsearch.best_params_)
         # print(gridsearch.cv_results_)
 
         # save the trained classifier
@@ -51,7 +59,7 @@ class NaiveBayes:
             os.remove(file_location)
         except OSError:
             pass
-        joblib.dump(tweet_classifier, file_location)
+        joblib.dump(gridsearch, file_location)
 
     @classmethod
     def test_classifier(cls):
@@ -64,25 +72,6 @@ class NaiveBayes:
 
         tweet_classifier = joblib.load(file_location)
         predicted = tweet_classifier.predict(dataFrameTest['message'].values)
-        # print(np.mean(predicted == dataFrameTest['sentiment'].values))
         print(metrics.accuracy_score(dataFrameTest['sentiment'].values, predicted))
         print(metrics.classification_report(dataFrameTest['sentiment'].values, predicted))
         print(metrics.confusion_matrix(dataFrameTest['sentiment'].values, predicted))
-
-    # @classmethod
-    # def show_most_informative_features(cls):
-    #     dataFrameTraining = load_data.LoadData.get_labelled_data(type='training')
-    #     vect = CountVectorizer(ngram_range=(1,2), strip_accents= 'unicode',stop_words='english')
-    #     x_train_counts = vect.fit_transform(dataFrameTraining['message'].values)
-    #     tf_transformer = TfidfTransformer(use_idf=False)
-    #     x_train_tf = tf_transformer.fit_transform(x_train_counts)
-    #     clf = MultinomialNB().fit(x_train_tf, dataFrameTraining['sentiment'].values)
-
-    #     """Prints features with the highest coefficient values, per class"""
-    #     feature_names = vect.get_feature_names()
-    #     n=20
-    #     feature_names = vect.get_feature_names()
-    #     coefs_with_fns = sorted(zip(clf.coef_[0], feature_names))
-    #     top = zip(coefs_with_fns[:n], coefs_with_fns[:-(n + 1):-1])
-    #     for (coef_1, fn_1), (coef_2, fn_2) in top:
-    #         print ("\t%.4f\t%-15s\t\t%.4f\t%-15s" % (coef_1, fn_1, coef_2, fn_2))
