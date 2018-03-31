@@ -55,7 +55,7 @@ class NaiveBayes:
 
     @classmethod
     def test_classifier(cls):
-        dataFrameTest = load_data.LoadData.get_labelled_data(type='training')
+        dataFrameTest = load_data.LoadData.get_labelled_data(type='test')
 
         # load the saved classifier
         file_location = 'naive_bayes_classifier.pkl'
