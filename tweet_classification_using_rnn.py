@@ -6,6 +6,7 @@ import numpy as np
 import tensorflow as tf
 
 data = pd.read_csv('data-extractor/sentiment_db.csv')
+data =data.sample(frac=1).reset_index(drop=True)
 
 del data['message_id']
 del data['symbol']
@@ -62,15 +63,19 @@ from collections import Counter
 counts = Counter(words)
 vocab = sorted(counts, key=counts.get, reverse=True)
 vocab_to_int = {word: ii for ii, word in enumerate(vocab, 1)}
-max_len = data.message_length.max()
+max_len = 20
+# 99% data tokenizes to 20 words
 
 
 def fun(x):
     vec = []
     zeroes = max_len - len(x)
-    for i in range(zeroes):
-        vec.append(0)
-    for word in x:
+    if zeroes > 0:
+        for i in range(zeroes):
+            vec.append(0)
+
+    for i in range(max_len - len(vec)):
+        word = x[i]
         vec.append(vocab_to_int[word])
     return np.array(vec)
 
@@ -84,8 +89,8 @@ features = []
 for vec in data.encoded_message:
     features.append(vec.tolist())
 features = np.array(features)
-np.random.shuffle(features)
-features = features[:80000]
+
+features = features[:120000]
 split_frac = 0.7
 
 split_index = int(split_frac * len(features))
