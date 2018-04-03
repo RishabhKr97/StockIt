@@ -103,6 +103,17 @@ class LoadData:
         return dataFrame
 
     @classmethod
+    def get_price_data(cls, symbol):
+        """
+            loads the price data of 'symbol' from data-extractor
+            and returns a pandas dataframe with columns [Date(datetime64[ns]), Opening Price(float64), Closing Price(float64), Volume(float64)].
+        """
+
+        file_location = 'data-extractor/stock_prices_'+symbol+'.csv'
+        dataFrame = pd.read_csv(file_location, usecols=['Date', 'Opening Price', 'Closing Price', 'Volume'], parse_dates=['Date'], infer_datetime_format=True)
+        return dataFrame
+
+    @classmethod
     def get_labelled_data(cls, type='complete'):
         """
             get_labelled_data loads the preprocessed labelled data of stocktwits from data-extractor
@@ -158,3 +169,109 @@ class LoadData:
 
         dataFrameTraining = dataFrameBearishTraining.append(dataFrameBullishTraining, ignore_index=True).sample(frac=1).reset_index(drop=True)
         dataFrameTraining.to_csv('data-extractor/labelled_data_training_preprocessed.csv', index=False)
+
+    @classmethod
+    def combine_price_and_sentiment(cls, sentimentFrame, priceFrame):
+        from datetime import timedelta
+
+        """
+            recieve sentimentFrame as (date, sentiment, message) indexed by date and setiment
+            and priceFrame as (Date, Opening Price, Closing Price, Volume) and return a combined
+            frame as (sentiment_calculated_bullish, sentiment_calculated_bearish,
+            sentiment_actual_previous, tweet_volume_change, cash_volume, label)
+        """
+
+        dataFrame = pd.DataFrame()
+        for date, df in sentimentFrame.groupby(level=0, sort=False):
+
+            price_current = priceFrame[priceFrame['Date'] == date]
+            if price_current.empty or date-timedelta(days=1) not in sentimentFrame.index:
+                continue
+            tweet_minus1 = sentimentFrame.loc[date-timedelta(days=1)]
+            days = 1
+            price_plus1 = priceFrame[priceFrame['Date'] == date+timedelta(days=days)]
+            while price_plus1.empty:
+                days += 1
+                price_plus1 = priceFrame[priceFrame['Date'] == date+timedelta(days=days)]
+            days = 1
+            price_minus1 = priceFrame[priceFrame['Date'] == date-timedelta(days=days)]
+            while price_minus1.empty:
+                days += 1
+                price_minus1 = priceFrame[priceFrame['Date'] == date-timedelta(days=days)]
+
+            new_row = {}
+            new_row['date'] = date
+            new_row['sentiment_calculated_bullish'] = df.loc[(date, 'Bullish')]['message']
+            new_row['sentiment_calculated_bearish'] = df.loc[(date, 'Bearish')]['message']
+            new_row['sentiment_actual_previous'] = 1 if ((price_minus1.iloc[0]['Closing Price'] - price_minus1.iloc[0]['Opening Price']) >= 0) else -1
+            new_row['tweet_volume_change'] = df['message'].sum() - tweet_minus1['message'].sum()
+            new_row['cash_volume'] = price_current['Volume'].iloc[0]
+            new_row['label'] = 1 if ((price_plus1.iloc[0]['Closing Price'] - price_current.iloc[0]['Closing Price']) >= 0) else -1
+            print(new_row)
+            dataFrame = dataFrame.append(new_row, ignore_index=True)
+
+        return dataFrame
+
+    @classmethod
+    def get_stock_prediction_data(cls):
+        """
+            compile stocktwits data for stock prediction analysis in the following form
+            (sentiment_calculated_bullish, sentiment_calculated_bearish, sentiment_actual_previous, tweet_volume_change, cash_volume, label)
+
+            we have choice to take previous n days sentiment_calculated and using label of next nth day
+
+            returns dataframes for AAPL, AMZN, GOOGL respectively
+        """
+
+        if not (os.path.isfile('data-extractor/stocktwits_AAPL_sharedata.csv') and os.path.isfile('data-extractor/stocktwits_AMZN_sharedata.csv') and os.path.isfile('data-extractor/stocktwits_GOOGL_sharedata.csv')):
+
+            from sklearn.externals import joblib
+            file_location = 'naive_bayes_classifier.pkl'
+
+            priceAAPL = LoadData.get_price_data('AAPL')
+            priceAMZN = LoadData.get_price_data('AMZN')
+            priceGOOGL = LoadData.get_price_data('GOOGL')
+
+            sentimented_file = 'data-extractor/stocktwits_AAPL_withsentiment.csv'
+            if os.path.isfile(sentimented_file) is False:
+                tweet_classifier = joblib.load(file_location)
+                dataAAPL = LoadData.get_stocktwits_data('AAPL')
+                dataAAPL['sentiment'] = dataAAPL['message'].apply(lambda x: tweet_classifier.predict([x])[0])
+                dataAAPL['datetime'] = dataAAPL['datetime'].apply(lambda x: x.date())
+                dataAAPL.rename(columns={'datetime':'date'}, inplace=True)
+                dataAAPL.to_csv('data-extractor/stocktwits_AAPL_withsentiment.csv', index=False)
+            sentimented_file = 'data-extractor/stocktwits_AMZN_withsentiment.csv'
+            if os.path.isfile(sentimented_file) is False:
+                tweet_classifier = joblib.load(file_location)
+                dataAMZN = LoadData.get_stocktwits_data('AMZN')
+                dataAMZN['sentiment'] = dataAMZN['message'].apply(lambda x: tweet_classifier.predict([x])[0])
+                dataAMZN['datetime'] = dataAMZN['datetime'].apply(lambda x: x.date())
+                dataAMZN.rename(columns={'datetime':'date'}, inplace=True)
+                dataAMZN.to_csv('data-extractor/stocktwits_AMZN_withsentiment.csv', index=False)
+            sentimented_file = 'data-extractor/stocktwits_GOOGL_withsentiment.csv'
+            if os.path.isfile(sentimented_file) is False:
+                tweet_classifier = joblib.load(file_location)
+                dataGOOGL = LoadData.get_stocktwits_data('GOOGL')
+                dataGOOGL['sentiment'] = dataGOOGL['message'].apply(lambda x: tweet_classifier.predict([x])[0])
+                dataGOOGL['datetime'] = dataGOOGL['datetime'].apply(lambda x: x.date())
+                dataGOOGL.rename(columns={'datetime':'date'}, inplace=True)
+                dataGOOGL.to_csv('data-extractor/stocktwits_GOOGL_withsentiment.csv', index=False)
+
+            dataAAPL = pd.read_csv('data-extractor/stocktwits_AAPL_withsentiment.csv', parse_dates=['date'], infer_datetime_format=True)
+            dataAMZN = pd.read_csv('data-extractor/stocktwits_AMZN_withsentiment.csv', parse_dates=['date'], infer_datetime_format=True)
+            dataGOOGL = pd.read_csv('data-extractor/stocktwits_GOOGL_withsentiment.csv', parse_dates=['date'], infer_datetime_format=True)
+            dataAAPL = dataAAPL.groupby(['date','sentiment'], sort=False).count()
+            dataAMZN = dataAMZN.groupby(['date','sentiment'], sort=False).count()
+            dataGOOGL = dataGOOGL.groupby(['date','sentiment'], sort=False).count()
+            dataAAPL = LoadData.combine_price_and_sentiment(dataAAPL, priceAAPL)
+            dataAMZN = LoadData.combine_price_and_sentiment(dataAMZN, priceAMZN)
+            dataGOOGL = LoadData.combine_price_and_sentiment(dataGOOGL, priceGOOGL)
+            dataAAPL.to_csv('data-extractor/stocktwits_AAPL_sharedata.csv', index=False)
+            dataAMZN.to_csv('data-extractor/stocktwits_AMZN_sharedata.csv', index=False)
+            dataGOOGL.to_csv('data-extractor/stocktwits_GOOGL_sharedata.csv', index=False)
+
+        dataAAPL = pd.read_csv('data-extractor/stocktwits_AAPL_sharedata.csv', parse_dates=['date'], infer_datetime_format=True)
+        dataAMZN = pd.read_csv('data-extractor/stocktwits_AMZN_sharedata.csv', parse_dates=['date'], infer_datetime_format=True)
+        dataGOOGL = pd.read_csv('data-extractor/stocktwits_GOOGL_sharedata.csv', parse_dates=['date'], infer_datetime_format=True)
+
+        return dataAAPL, dataAMZN, dataGOOGL

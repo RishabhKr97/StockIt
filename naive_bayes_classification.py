@@ -75,3 +75,15 @@ class NaiveBayes:
         print(metrics.accuracy_score(dataFrameTest['sentiment'].values, predicted))
         print(metrics.classification_report(dataFrameTest['sentiment'].values, predicted))
         print(metrics.confusion_matrix(dataFrameTest['sentiment'].values, predicted))
+
+    @classmethod
+    def get_sentiment(cls, message):
+
+        # predict the sentiment of message
+        file_location = 'naive_bayes_classifier.pkl'
+        if os.path.isfile(file_location) is False:
+            NaiveBayes.train_classifier()
+
+        tweet_classifier = joblib.load(file_location)
+        sentiment = tweet_classifier.predict([message])
+        return sentiment[0]
