@@ -213,10 +213,10 @@ class LoadData:
         return dataFrame
 
     @classmethod
-    def get_stock_prediction_data(cls):
+    def aggregate_stock_price_data(cls):
         """
             compile stocktwits data for stock prediction analysis in the following form
-            (sentiment_calculated_bullish, sentiment_calculated_bearish, sentiment_actual_previous, tweet_volume_change, cash_volume, label)
+            (date, sentiment_calculated_bullish, sentiment_calculated_bearish, sentiment_actual_previous, tweet_volume_change, cash_volume, label)
 
             we have choice to take previous n days sentiment_calculated and using label of next nth day
 
@@ -275,3 +275,47 @@ class LoadData:
         dataGOOGL = pd.read_csv('data-extractor/stocktwits_GOOGL_sharedata.csv', parse_dates=['date'], infer_datetime_format=True)
 
         return dataAAPL, dataAMZN, dataGOOGL
+
+    @classmethod
+    def get_stock_prediction_data(cls, symbol='ALL', type='training'):
+
+        """
+            get the training and test data for stock prediction in format
+            (sentiment_calculated_bullish, sentiment_calculated_bearish, sentiment_actual_previous,
+            tweet_volume_change, cash_volume, label)
+
+            Standardize the data before using.
+        """
+
+        file_location = 'data-extractor/stockdata_'+symbol+'_'+type+'.csv'
+        if not os.path.isfile(file_location):
+            import numpy as np
+
+            dataAAPL, dataAMZN, dataGOOGL = LoadData.aggregate_stock_price_data()
+            combined_data = dataAAPL.append([dataAMZN, dataGOOGL], ignore_index=True)
+            combined_data.sort_values('date')
+            combined_data.drop(columns='date', inplace=True)
+            combined_training, combined_test = np.split(combined_data.sample(frac=1), [int(.9*len(combined_data))])
+            combined_training.to_csv('data-extractor/stockdata_ALL_training.csv', index=False)
+            combined_test.to_csv('data-extractor/stockdata_ALL_test.csv', index=False)
+
+            dataAAPL.sort_values('date')
+            dataAAPL.drop(columns='date', inplace=True)
+            AAPL_training, AAPL_test = np.split(dataAAPL.sample(frac=1), [int(.9*len(dataAAPL))])
+            AAPL_training.to_csv('data-extractor/stockdata_AAPL_training.csv', index=False)
+            AAPL_test.to_csv('data-extractor/stockdata_AAPL_test.csv', index=False)
+
+            dataAMZN.sort_values('date')
+            dataAMZN.drop(columns='date', inplace=True)
+            AMZN_training, AMZN_test = np.split(dataAMZN.sample(frac=1), [int(.9*len(dataAMZN))])
+            AMZN_training.to_csv('data-extractor/stockdata_AMZN_training.csv', index=False)
+            AMZN_test.to_csv('data-extractor/stockdata_AMZN_test.csv', index=False)
+
+            dataGOOGL.sort_values('date')
+            dataGOOGL.drop(columns='date', inplace=True)
+            GOOGL_training, GOOGL_test = np.split(dataGOOGL.sample(frac=1), [int(.9*len(dataGOOGL))])
+            GOOGL_training.to_csv('data-extractor/stockdata_GOOGL_training.csv', index=False)
+            GOOGL_test.to_csv('data-extractor/stockdata_GOOGL_test.csv', index=False)
+
+        data = pd.read_csv(file_location)
+        return data
