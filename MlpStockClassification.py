@@ -65,7 +65,7 @@ class MLP:
         parameters = {
             'feats__scaler__scale__with_mean':(True,False),
             'feats__scaler__scale__with_std':(True,False),
-            'mlp__hidden_layer_sizes':((2),(3)),
+            'mlp__hidden_layer_sizes':((2), (3), (2,3), (3,2), (2,2), (3,3), (3,3,3)),
             'mlp__solver':('lbfgs', 'adam'),
             'mlp__alpha': 10.0 ** -np.arange(1, 7)
         }
@@ -81,3 +81,19 @@ class MLP:
         except OSError:
             pass
         joblib.dump(gridsearch, file_location)
+
+    @classmethod
+    def test_nn(cls, symbol='ALL'):
+
+        dataFrameTest = load_data.LoadData.get_stock_prediction_data(symbol=symbol, type='test')
+
+        # load the saved classifier
+        file_location = 'NN_classifier_'+symbol+'.pkl'
+        if os.path.isfile(file_location) is False:
+            MLP.train_nn(symbol=symbol)
+
+        classifier = joblib.load(file_location)
+        predicted = classifier.predict(dataFrameTest.values)
+        print(metrics.accuracy_score(dataFrameTest['label'].values, predicted))
+        print(metrics.classification_report(dataFrameTest['label'].values, predicted))
+        print(metrics.confusion_matrix(dataFrameTest['label'].values, predicted))
