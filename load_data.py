@@ -175,7 +175,7 @@ class LoadData:
         from datetime import timedelta
 
         """
-            recieve sentimentFrame as (date, sentiment, message) indexed by date and setiment
+            receive sentimentFrame as (date, sentiment, message) indexed by date and sentiment
             and priceFrame as (Date, Opening Price, Closing Price, Volume) and return a combined
             frame as (sentiment_calculated_bullish, sentiment_calculated_bearish,
             sentiment_actual_previous, tweet_volume_change, cash_volume, label)
